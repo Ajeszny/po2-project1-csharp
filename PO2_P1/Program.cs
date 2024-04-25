@@ -49,6 +49,7 @@ class SimpleWindow
         Sprite? selectedchecker = null;
         int sx = -1, sy = -1;
         int current_color = 1;
+        bool forced = false;
 
         for (int i = 0;i < 8;i++)//x-es
         {
@@ -96,6 +97,7 @@ class SimpleWindow
         // Start the game loop
         while (window.IsOpen)
         {
+            forced = false;
             // Process events
             window.DispatchEvents();
             window.Draw(boardsprite);
@@ -103,7 +105,14 @@ class SimpleWindow
             {
                 for(int j = 0; j < 8; j++)
                 {
-                    if (checkers[i, j].c != null) window.Draw(checkers[i, j].c.Sprite);
+                    if (checkers[i, j].c != null)
+                    {
+                        window.Draw(checkers[i, j].c.Sprite);
+                        if (can_attack(i, j)&&current_color == checkers[i, j].c.color)
+                        {
+                            forced = true;
+                        }
+                    }
                 }
             }
             Vector2i zalupa = new Vector2i();
@@ -148,18 +157,24 @@ class SimpleWindow
                     {
                         if (Math.Abs(zalupa.X - sx) == 1 && (zalupa.Y - sy) == 1)
                         {
-                            if (Convert.ToBoolean(move_black_checker(zalupa.X - sx, sx, sy)))
+                            if ((forced && can_attack(sx, sy)) || !forced)
                             {
-                                current_color = 1;
+                                if (Convert.ToBoolean(move_black_checker(zalupa.X - sx, sx, sy)))
+                                {
+                                    current_color = 1;
+                                }
                             }
                         }
                     } else if (current_color == 1) {
 
                         if (Math.Abs(zalupa.X - sx) == 1 && (zalupa.Y - sy) == -1)
                         {
-                            if (Convert.ToBoolean(move_white_checker(zalupa.X - sx, sx, sy)))
+                            if ((forced && can_attack(sx, sy)) || !forced)
                             {
-                                current_color = 0;
+                                if (Convert.ToBoolean(move_white_checker(zalupa.X - sx, sx, sy)))
+                                {
+                                    current_color = 0;
+                                }
                             }
                         }
                     }
@@ -175,6 +190,52 @@ class SimpleWindow
             // Finally, display the rendered frame on screen
             window.Display();
         }
+    }
+
+    bool can_attack(int x, int y)
+    {
+        if (x+2 < 8)
+        {
+            if (y+2 < 8)
+            {
+                if ((!(checkers[x+2, y + 2].HasChecker)) && 
+                    checkers[x+1, y+1].HasChecker && checkers[x + 1, y + 1].c.color != checkers[x, y].c.color)
+                {
+                    return true;
+                }
+            }
+
+            if (y - 2 >= 0)
+            {
+                if (!(checkers[x + 2, y - 2].HasChecker) &&
+                    checkers[x + 1, y - 1].HasChecker && checkers[x + 1, y - 1].c.color != checkers[x, y].c.color)
+                {
+                    return true;
+                }
+            }
+        }
+
+        if (x - 2 >= 0)
+        {
+            if (y + 2 < 8)
+            {
+                if (!(checkers[x - 2, y + 2].HasChecker)&&
+                    checkers[x - 1, y + 1].HasChecker && checkers[x - 1, y + 1].c.color != checkers[x, y].c.color)
+                {
+                    return true;
+                }
+            }
+
+            if (y - 2 >= 0)
+            {
+                if (!(checkers[x - 2, y - 2].HasChecker)
+                    && checkers[x - 1, y - 1].HasChecker && checkers[x - 1, y - 1].c.color != checkers[x, y].c.color)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /// <summary>
