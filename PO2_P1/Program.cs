@@ -20,12 +20,13 @@ class SimpleWindow
     const int offsetx = 26;
     const int offsety = 36;
     private Tile[,] checkers;
+    SFML.Graphics.RenderWindow window;
 
     public void Run()
     {
         uint x = 600, y = 600;
         var mode = new SFML.Window.VideoMode(x - 142/4, y-142/4);
-        var window = new SFML.Graphics.RenderWindow(mode, "SFML works!");
+        window = new SFML.Graphics.RenderWindow(mode, "SFML works!");
         window.SetMouseCursorVisible(false);
         window.KeyPressed += Window_KeyPressed;
         window.Closed += Window_Closed;
@@ -42,6 +43,7 @@ class SimpleWindow
         checkers = new Tile[8,8];
         Sprite? selectedchecker = null;
         int sx = -1, sy = -1;
+        int current_color = 1;
 
         for (int i = 0;i < 8;i++)//x-es
         {
@@ -71,8 +73,8 @@ class SimpleWindow
             {
                 if (
                     (i % 2 != 0 && j != 6) 
-                    //||
-                    //(i % 2 == 0 && j == 6)
+                    ||
+                    (i % 2 == 0 && j == 6)
                     )
                 {
                     checkers[i, j] = new Tile(new Checker(checkertexture, 0, 64, i, j));
@@ -85,7 +87,6 @@ class SimpleWindow
         }
 
         boardsprite.Scale = new Vector2f((x)/142, (y) / 142);
-        move_black_checker(-1, 4, 2);
 
         // Start the game loop
         while (window.IsOpen)
@@ -110,31 +111,44 @@ class SimpleWindow
             cursorsprite.TextureRect = new IntRect(16, 0, 16, 16);
             if (SFML.Window.Mouse.IsButtonPressed(0))
             {
-                if (checkers[zalupa.X, zalupa.Y].c != null||selectedchecker != null)
-                {
-                    if (checkers[zalupa.X, zalupa.Y].c != null && selectedchecker == null) {
-                        selectedchecker = new Sprite(checkers[zalupa.X, zalupa.Y].c.Sprite);
+                if (zalupa.X >= 0&& zalupa.Y >= 0&& zalupa.X < 8&& zalupa.Y < 8){
+                    if (checkers[zalupa.X, zalupa.Y].c != null || selectedchecker != null)
+                    {
+                        if (checkers[zalupa.X, zalupa.Y].c != null && selectedchecker == null)
+                        {
+                            selectedchecker = new Sprite(checkers[zalupa.X, zalupa.Y].c.Sprite);
                             sx = zalupa.X;
                             sy = zalupa.Y;
+                        }
+                        selectedchecker.Position = new Vector2f(pos.X, pos.Y);
+
+                        window.Draw(selectedchecker);
                     }
-                    selectedchecker.Position = new Vector2f(pos.X, pos.Y);
-                    
-                    window.Draw(selectedchecker);
-                } 
+                }
                 cursorsprite.TextureRect = new IntRect(32, 0, 16, 16);
                 
             } else
             {
                 if (selectedchecker != null)
                 {
-                    if (Math.Abs(zalupa.X - sx) == 1&& (zalupa.Y - sy) == 1)
+                    if (current_color == 0)
                     {
-                        move_black_checker(zalupa.X - sx, sx, sy);
-                    }
+                        if (Math.Abs(zalupa.X - sx) == 1 && (zalupa.Y - sy) == 1)
+                        {
+                            if (Convert.ToBoolean(move_black_checker(zalupa.X - sx, sx, sy)))
+                            {
+                                current_color = 1;
+                            }
+                        }
+                    } else if (current_color == 1) {
 
-                    if (Math.Abs(zalupa.X - sx) == 1 && (zalupa.Y - sy) == -1)
-                    {
-                        move_white_checker(zalupa.X - sx, sx, sy);
+                        if (Math.Abs(zalupa.X - sx) == 1 && (zalupa.Y - sy) == -1)
+                        {
+                            if (Convert.ToBoolean(move_white_checker(zalupa.X - sx, sx, sy)))
+                            {
+                                current_color = 0;
+                            }
+                        }
                     }
                 }
                 sx = 0;
@@ -156,36 +170,59 @@ class SimpleWindow
     /// <param name="dir">Either 1 or -1</param>
     /// <param name="x">x of dest checker</param>
     /// <param name="y">y of dest checker</param>
-    private void move_black_checker(int dir, int x, int y)
+    private int move_black_checker(int dir, int x, int y)
     {
-        if (x < 0 || y < 0 || x > 8 || y > 8|| checkers[x, y].c.color != 1) return;
-        if (checkers[x + dir, y + 1].c != null&& checkers[x + dir*2, y + 2].c == null)
+        if (x < 0 || y < 0 || x > 8 || y > 8|| checkers[x, y].c.color != 1) return 0;
+        if (checkers[x + dir, y + 1].c != null)
         {
+            if (((x + dir * 2 >= 8)
+            || (y + 2 >= 8)
+            || (x + dir * 2 < 0)
+            || (y + 2 < 0)))
+            {
+                return 0;
+            }
+            if (checkers[x + dir * 2, y + 2].c != null) { return 0; }
             checkers[x + dir * 2, y + 2] = new Tile(checkers[x, y]);
             checkers[x + dir * 2, y + 2].c.Move(x + dir * 2, y + 2);
             checkers[x, y] = new Tile();
             checkers[x + dir, y + 1] = new Tile();
-            return;
+            return 1;
         }
         checkers[x+dir, y+1] = new Tile(checkers[x, y]);
         checkers[x + dir, y + 1].c.Move(x + dir, y + 1);
         checkers[x, y] = new Tile();
+        return 1;
     }
 
-    private void move_white_checker(int dir, int x, int y)
+    Vector2i local_input(int color)
     {
-        if (x < 0 || y < 0 || x > 8 || y > 8 || checkers[x, y].c.color != 0) return;
-        if (checkers[x + dir, y - 1].c != null && checkers[x + dir * 2, y - 2].c == null)
+        return get_mouse_coords(window);
+    }
+
+    private int move_white_checker(int dir, int x, int y)
+    {
+        if (x < 0 || y < 0 || x > 8 || y > 8 || checkers[x, y].c.color != 0) return 0;
+        if (checkers[x + dir, y - 1].c != null)
         {
+            if (((x + dir * 2 >= 8)
+            || (y + 2 >= 8)
+            || (x + dir * 2 < 0)
+            || (y + 2 < 0)))
+            {
+                return 0;
+            }
+            if (checkers[x + dir * 2, y - 2].c != null) { return 0; }
             checkers[x + dir * 2, y - 2] = new Tile(checkers[x, y]);
             checkers[x + dir * 2, y - 2].c.Move(x + dir * 2, y - 2);
             checkers[x, y] = new Tile();
             checkers[x + dir, y - 1] = new Tile();
-            return;
+            return 0;
         }
         checkers[x + dir, y - 1] = new Tile(checkers[x, y]);
         checkers[x + dir, y - 1].c.Move(x + dir, y - 1);
         checkers[x, y] = new Tile();
+        return 1;
     }
 
     private Vector2i get_mouse_coords(Window window)

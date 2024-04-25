@@ -186,3 +186,4 @@ D:\Fuck Jetbrains\C#\PO2_P1\PO2_P1\obj\Debug\net8.0\refint\PO2_P1.dll
 D:\Fuck Jetbrains\C#\PO2_P1\PO2_P1\obj\Debug\net8.0\PO2_P1.pdb
 D:\Fuck Jetbrains\C#\PO2_P1\PO2_P1\obj\Debug\net8.0\PO2_P1.genruntimeconfig.cache
 D:\Fuck Jetbrains\C#\PO2_P1\PO2_P1\obj\Debug\net8.0\ref\PO2_P1.dll
+D:\Fuck Jetbrains\C#\PO2_P1\PO2_P1\obj\Debug\net8.0\PO2_P1.sourcelink.json
