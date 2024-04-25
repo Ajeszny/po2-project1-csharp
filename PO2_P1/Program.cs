@@ -2,6 +2,7 @@
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
+using System.Runtime.CompilerServices;
 
 static class Program
 {
@@ -21,9 +22,13 @@ class SimpleWindow
     const int offsety = 36;
     private Tile[,] checkers;
     SFML.Graphics.RenderWindow window;
+    delegate Vector2i PlayerInput(int color);
 
     public void Run()
     {
+        PlayerInput p1_input = local_input;
+        PlayerInput p2_input = local_input;
+
         uint x = 600, y = 600;
         var mode = new SFML.Window.VideoMode(x - 142/4, y-142/4);
         window = new SFML.Graphics.RenderWindow(mode, "SFML works!");
@@ -101,7 +106,15 @@ class SimpleWindow
                     if (checkers[i, j].c != null) window.Draw(checkers[i, j].c.Sprite);
                 }
             }
-            Vector2i zalupa = get_mouse_coords(window);
+            Vector2i zalupa = new Vector2i();
+            if (current_color == 1)
+            {
+                zalupa = p2_input(current_color);
+            }
+            if (current_color == 0)
+            {
+                zalupa = p1_input(current_color);
+            }
             if (zalupa.X >= 0 && zalupa.Y >= 0) {
                 selectionsprite.Position = new Vector2f(zalupa.X*64 + offsetx + 2, zalupa.Y*64 - offsety + 64);
                 window.Draw(selectionsprite);
@@ -177,8 +190,7 @@ class SimpleWindow
         {
             if (((x + dir * 2 >= 8)
             || (y + 2 >= 8)
-            || (x + dir * 2 < 0)
-            || (y + 2 < 0)))
+            || (x + dir * 2 < 0)))
             {
                 return 0;
             }
@@ -206,7 +218,6 @@ class SimpleWindow
         if (checkers[x + dir, y - 1].c != null)
         {
             if (((x + dir * 2 >= 8)
-            || (y + 2 >= 8)
             || (x + dir * 2 < 0)
             || (y + 2 < 0)))
             {
@@ -217,7 +228,7 @@ class SimpleWindow
             checkers[x + dir * 2, y - 2].c.Move(x + dir * 2, y - 2);
             checkers[x, y] = new Tile();
             checkers[x + dir, y - 1] = new Tile();
-            return 0;
+            return 1;
         }
         checkers[x + dir, y - 1] = new Tile(checkers[x, y]);
         checkers[x + dir, y - 1].c.Move(x + dir, y - 1);
