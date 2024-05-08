@@ -23,6 +23,7 @@ class SimpleWindow
     private Tile[,] checkers;
     SFML.Graphics.RenderWindow window;
     delegate Vector2i PlayerInput(int color);
+    int current_color = 1;
 
     public void Run()
     {
@@ -48,7 +49,6 @@ class SimpleWindow
         checkers = new Tile[8,8];
         Sprite? selectedchecker = null;
         int sx = -1, sy = -1;
-        int current_color = 1;
         bool forced = false;
 
         for (int i = 0;i < 8;i++)//x-es
@@ -97,6 +97,10 @@ class SimpleWindow
         // Start the game loop
         while (window.IsOpen)
         {
+            if (Has_Somebody_Won() != 0)
+            {
+                break;
+            }
             forced = false;
             // Process events
             window.DispatchEvents();
@@ -108,7 +112,7 @@ class SimpleWindow
                     if (checkers[i, j].c != null)
                     {
                         window.Draw(checkers[i, j].c.Sprite);
-                        if (can_attack(i, j)&&current_color == checkers[i, j].c.color)
+                        if (can_attack(i, j)&&current_color != checkers[i, j].c.color)
                         {
                             forced = true;
                         }
@@ -190,10 +194,19 @@ class SimpleWindow
             // Finally, display the rendered frame on screen
             window.Display();
         }
+
+        while (window.IsOpen)
+        {
+
+        }
     }
 
     bool can_attack(int x, int y)
     {
+        if (current_color == checkers[x, y].c.color)
+        {
+            return false;
+        }
         if (x+2 < 8)
         {
             if (y+2 < 8)
@@ -205,7 +218,7 @@ class SimpleWindow
                 }
             }
 
-            if (y - 2 >= 0)
+            if (y - 2 >= 0 && current_color == 1)
             {
                 if (!(checkers[x + 2, y - 2].HasChecker) &&
                     checkers[x + 1, y - 1].HasChecker && checkers[x + 1, y - 1].c.color != checkers[x, y].c.color)
@@ -217,7 +230,7 @@ class SimpleWindow
 
         if (x - 2 >= 0)
         {
-            if (y + 2 < 8)
+            if (y + 2 < 8 && current_color == 0)
             {
                 if (!(checkers[x - 2, y + 2].HasChecker)&&
                     checkers[x - 1, y + 1].HasChecker && checkers[x - 1, y + 1].c.color != checkers[x, y].c.color)
@@ -321,5 +334,32 @@ class SimpleWindow
     {
         var window = (SFML.Window.Window)sender;
         window.Close();
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>-1 if p1 won
+    /// 0 if game still running
+    /// 1 if p2 won</returns>
+    int Has_Somebody_Won ()
+    {
+        int p1=0, p2=0;
+
+        foreach (Tile t in checkers)
+        {
+            if (t.c != null)
+            {
+                if (t.c.color == 0)
+                {
+                    p1 = 1;
+                }
+                if (t.c.color == 1)
+                {
+                    p2 = 1;
+                }
+            }
+        }
+
+        return p1 * -1 + p2 * 1;
     }
 }
